@@ -7,13 +7,13 @@
 
 ## Public release disclaimers
 
-| Statement | Status |
-| --------- | ------ |
-| **Sandbox only** | All providers are deterministic sandboxes; no live rails |
-| **`LIVE_TRANSFERS_ENABLED=false`** | Default in `.env.example`, CI, and startup guards |
-| **No real money movement** | No customer funds, settlement, or live credentials |
-| **No regulatory authorization** | Not a licensed payment institution; compliance copy is placeholder |
-| **Mobile device E2E** | Maestro on iOS/Android **pending stable hardware**; offline + unit verification **complete** |
+| Statement                          | Status                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Sandbox only**                   | All providers are deterministic sandboxes; no live rails                                     |
+| **`LIVE_TRANSFERS_ENABLED=false`** | Default in `.env.example`, CI, and startup guards                                            |
+| **No real money movement**         | No customer funds, settlement, or live credentials                                           |
+| **No regulatory authorization**    | Not a licensed payment institution; compliance copy is placeholder                           |
+| **Mobile device E2E**              | Maestro on iOS/Android **pending stable hardware**; offline + unit verification **complete** |
 
 This report does **not** constitute legal, compliance, or security certification for production use.
 
@@ -21,13 +21,13 @@ This report does **not** constitute legal, compliance, or security certification
 
 ## Executive summary
 
-| Verdict                           | Assessment                                                                 |
-| --------------------------------- | -------------------------------------------------------------------------- |
-| **Phase 3 (customer web)**        | **Complete** — E2E + a11y in CI; local smoke via `test:e2e:smoke`          |
+| Verdict                           | Assessment                                                                  |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| **Phase 3 (customer web)**        | **Complete** — E2E + a11y in CI; local smoke via `test:e2e:smoke`           |
 | **Phase 4 (native mobile)**       | **Complete (code)** — offline verified; device Maestro **pending hardware** |
-| **Portfolio / demo hosting**      | **Ready (web)** — mobile demo via unit-tested app + web parity             |
-| **Production / real-money pilot** | **Not ready**                                                              |
-| **Legal / compliance advice**     | **Not provided** — placeholders only                                       |
+| **Portfolio / demo hosting**      | **Ready (web)** — mobile demo via unit-tested app + web parity              |
+| **Production / real-money pilot** | **Not ready**                                                               |
+| **Legal / compliance advice**     | **Not provided** — placeholders only                                        |
 
 ---
 
@@ -86,14 +86,14 @@ SANDBOX_FORCE_KYC_APPROVED=true pnpm exec vitest run src/integration/
 
 ## Mobile verification
 
-| Check                   | Result                                                                        |
-| ----------------------- | ----------------------------------------------------------------------------- |
-| Offline verification    | **PASS** — `scripts/test-mobile-offline.sh` (2026-06-21)                      |
-| RN unit tests           | **19 passed** — components, hooks, i18n, send draft storage                   |
-| Maestro flows           | 5 YAML flows validated; device run **ENVIRONMENT_PENDING** (beta OS / RAM)      |
-| iOS Simulator           | Blocked locally — Xcode iOS 26.5 vs simulator iOS 17.0; use CI/stable Mac     |
-| Android Emulator        | Not configured on this machine                                                |
-| Biometrics / deep links | Unit-tested hooks; sandbox-only                                               |
+| Check                   | Result                                                                     |
+| ----------------------- | -------------------------------------------------------------------------- |
+| Offline verification    | **PASS** — `scripts/test-mobile-offline.sh` (2026-06-21)                   |
+| RN unit tests           | **19 passed** — components, hooks, i18n, send draft storage                |
+| Maestro flows           | 5 YAML flows validated; device run **ENVIRONMENT_PENDING** (beta OS / RAM) |
+| iOS Simulator           | Blocked locally — Xcode iOS 26.5 vs simulator iOS 17.0; use CI/stable Mac  |
+| Android Emulator        | Not configured on this machine                                             |
+| Biometrics / deep links | Unit-tested hooks; sandbox-only                                            |
 
 ---
 

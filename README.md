@@ -8,13 +8,13 @@ Built as a portfolio-grade fintech monorepo demonstrating production patterns â€
 
 This repository is a **public portfolio project**. It is **not** licensed or authorized for real-money remittance.
 
-| Statement | Detail |
-| --------- | ------ |
-| **Sandbox only** | Deterministic sandbox providers; no live payment rails |
-| **`LIVE_TRANSFERS_ENABLED=false`** | Required default; API startup fails if set to `true` |
-| **No real money** | No live credentials, no customer funds, no settlement |
-| **No regulatory authorization** | Not a licensed payment institution; compliance pages are placeholders |
-| **Mobile device E2E** | Maestro iOS/Android runs pending stable hardware; **offline + unit verification is complete** (`bash scripts/test-mobile-offline.sh`) |
+| Statement                          | Detail                                                                                                                                |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **Sandbox only**                   | Deterministic sandbox providers; no live payment rails                                                                                |
+| **`LIVE_TRANSFERS_ENABLED=false`** | Required default; API startup fails if set to `true`                                                                                  |
+| **No real money**                  | No live credentials, no customer funds, no settlement                                                                                 |
+| **No regulatory authorization**    | Not a licensed payment institution; compliance pages are placeholders                                                                 |
+| **Mobile device E2E**              | Maestro iOS/Android runs pending stable hardware; **offline + unit verification is complete** (`bash scripts/test-mobile-offline.sh`) |
 
 See [docs/FINAL_VERIFICATION_REPORT.md](./docs/FINAL_VERIFICATION_REPORT.md) for the full audit.
 

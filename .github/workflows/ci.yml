@@ -201,7 +201,7 @@ jobs:
         run: pnpm audit --audit-level high
 
       - name: Run Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.27.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scan-ref: .

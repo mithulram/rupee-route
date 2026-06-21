@@ -46,7 +46,9 @@ test.describe('Accessibility — axe WCAG 2.2 AA', () => {
     const user = await registerKycEligibleUser(request);
     await loginViaUi(page, user.email, user.password);
     await page.goto(`/transfers/${user.transferId}`);
-    await expect(page.getByRole('heading', { name: /Transfer detail|Überweisungsdetail/i })).toBeVisible({
+    await expect(
+      page.getByRole('heading', { name: /Transfer detail|Überweisungsdetail/i }),
+    ).toBeVisible({
       timeout: 30_000,
     });
 

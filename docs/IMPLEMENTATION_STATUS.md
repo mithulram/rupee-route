@@ -4,14 +4,14 @@ Last updated: **2026-06-21**
 
 ## Overall status
 
-| Phase | Name                       | Status       | Notes                                          |
-| ----- | -------------------------- | ------------ | ---------------------------------------------- |
-| 0     | Planning & scaffold        | **Complete** | README, product/architecture docs              |
-| 1     | Foundation monorepo        | **Complete** | All apps build; CI-ready                       |
-| 2     | Financial domain & sandbox | **Complete** | State machine, quotes, ledger, providers, API  |
-| 3     | Customer web UI            | **Complete** | E2E + axe verified (see Phase 3 verification)  |
-| 4     | Native mobile              | **Complete*** | Tabs, send flow, RN tests, Maestro flows; *device E2E pending local hardware |
-| 5     | Operational readiness      | **Complete** | Admin RBAC, ops tooling, security, docs        |
+| Phase | Name                       | Status         | Notes                                                                         |
+| ----- | -------------------------- | -------------- | ----------------------------------------------------------------------------- |
+| 0     | Planning & scaffold        | **Complete**   | README, product/architecture docs                                             |
+| 1     | Foundation monorepo        | **Complete**   | All apps build; CI-ready                                                      |
+| 2     | Financial domain & sandbox | **Complete**   | State machine, quotes, ledger, providers, API                                 |
+| 3     | Customer web UI            | **Complete**   | E2E + axe verified (see Phase 3 verification)                                 |
+| 4     | Native mobile              | **Complete\*** | Tabs, send flow, RN tests, Maestro flows; \*device E2E pending local hardware |
+| 5     | Operational readiness      | **Complete**   | Admin RBAC, ops tooling, security, docs                                       |
 
 ---
 
@@ -93,15 +93,15 @@ pnpm --filter @rupeeroute/web test:a11y
 bash scripts/test-mobile-offline.sh
 ```
 
-| Gate                | Command                                   | Result (2026-06-21)                                       |
-| ------------------- | ----------------------------------------- | --------------------------------------------------------- |
-| Lint                | `pnpm lint`                               | **PASS** (17/17)                                          |
-| Typecheck           | `pnpm typecheck`                          | **PASS** (17/17)                                          |
-| Build               | `pnpm build`                              | **PASS** (11/11)                                          |
-| Format              | `pnpm format:check`                       | **PASS**                                                  |
-| Mobile offline      | `bash scripts/test-mobile-offline.sh`     | **PASS** (19 unit tests, Maestro YAML)                    |
-| Mobile device E2E   | `scripts/test-mobile-maestro.sh ios`      | **PENDING** (beta OS / Xcode / RAM)                       |
-| Playwright E2E full | `pnpm --filter @rupeeroute/web test:e2e`  | Run in CI (local full run flaky under RAM pressure)       |
+| Gate                | Command                                        | Result (2026-06-21)                                 |
+| ------------------- | ---------------------------------------------- | --------------------------------------------------- |
+| Lint                | `pnpm lint`                                    | **PASS** (17/17)                                    |
+| Typecheck           | `pnpm typecheck`                               | **PASS** (17/17)                                    |
+| Build               | `pnpm build`                                   | **PASS** (11/11)                                    |
+| Format              | `pnpm format:check`                            | **PASS**                                            |
+| Mobile offline      | `bash scripts/test-mobile-offline.sh`          | **PASS** (19 unit tests, Maestro YAML)              |
+| Mobile device E2E   | `scripts/test-mobile-maestro.sh ios`           | **PENDING** (beta OS / Xcode / RAM)                 |
+| Playwright E2E full | `pnpm --filter @rupeeroute/web test:e2e`       | Run in CI (local full run flaky under RAM pressure) |
 | Web smoke           | `pnpm --filter @rupeeroute/web test:e2e:smoke` | Chromium core flows only                            |
 
 **Sandbox:** `LIVE_TRANSFERS_ENABLED=false`, sandbox providers only.
