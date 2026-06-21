@@ -1,0 +1,216 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rupeeroute
+          POSTGRES_PASSWORD: rupeeroute
+          POSTGRES_DB: rupeeroute
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rupeeroute -d rupeeroute"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://rupeeroute:rupeeroute@localhost:5432/rupeeroute?schema=public
+      REDIS_URL: redis://localhost:6379
+      NODE_ENV: test
+      LOG_LEVEL: warn
+      LIVE_TRANSFERS_ENABLED: 'false'
+      SANDBOX_FORCE_KYC_APPROVED: 'true'
+      API_PORT: '3001'
+      WORKER_PORT: '3002'
+      JWT_SECRET: ci-jwt-secret-minimum-16-chars
+      WEBHOOK_SIGNING_SECRET: ci-webhook-secret
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_SANDBOX_BANNER: 'true'
+      EXPO_PUBLIC_API_URL: http://localhost:3001
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run migrations
+        run: pnpm db:migrate
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+        env:
+          CI: 'true'
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Build all apps and packages
+        run: pnpm build
+
+  web-e2e:
+    runs-on: ubuntu-latest
+    needs: quality
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rupeeroute
+          POSTGRES_PASSWORD: rupeeroute
+          POSTGRES_DB: rupeeroute
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rupeeroute -d rupeeroute"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://rupeeroute:rupeeroute@localhost:5432/rupeeroute?schema=public
+      REDIS_URL: redis://localhost:6379
+      CI: 'true'
+      LIVE_TRANSFERS_ENABLED: 'false'
+      SANDBOX_FORCE_KYC_APPROVED: 'true'
+      JWT_SECRET: ci-jwt-secret-minimum-16-chars
+      WEBHOOK_SIGNING_SECRET: ci-webhook-secret
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+      PLAYWRIGHT_API_URL: http://localhost:3001
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Run migrations
+        run: pnpm db:migrate
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @rupeeroute/web exec playwright install --with-deps chromium firefox webkit
+
+      - name: Build web (production)
+        run: pnpm --filter @rupeeroute/web build
+        env:
+          NODE_ENV: production
+
+      - name: Playwright E2E
+        run: pnpm --filter @rupeeroute/web test:e2e
+
+      - name: Playwright accessibility (axe + keyboard)
+        run: pnpm --filter @rupeeroute/web test:a11y
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rupeeroute-playwright-failure
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          if-no-files-found: warn
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Scan for committed secrets (gitleaks)
+        run: npx --yes gitleaks@8.21.2 detect --no-banner --redact --source . --verbose
+
+      - name: Scan for committed secrets (pattern check)
+        run: bash scripts/check-secrets.sh .
+
+      - name: Generate SBOM
+        run: npx --yes @cyclonedx/cyclonedx-npm@1.19.0 --output-file sbom.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rupeeroute-sbom-security
+          path: sbom.json
+          if-no-files-found: error
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level high
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          ignore-unfixed: true

@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "RupeeRoute",
+    "slug": "rupeeroute",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "rupeeroute",
+    "userInterfaceStyle": "light",
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rupeeroute.sandbox"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B3D4C"
+      },
+      "package": "com.rupeeroute.sandbox"
+    },
+    "plugins": ["expo-router"]
+  }
+}

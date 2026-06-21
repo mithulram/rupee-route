@@ -1,0 +1,35 @@
+{
+  "name": "@rupeeroute/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --port 3000",
+    "start": "next start --port 3000",
+    "lint": "eslint src --max-warnings 0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test --grep-invert @screenshot",
+    "test:e2e:smoke": "playwright test e2e/auth.spec.ts e2e/dashboard.spec.ts e2e/send-flow.spec.ts e2e/full-send-flow.spec.ts e2e/landing.spec.ts e2e/i18n.spec.ts --project=chromium-desktop",
+    "test:a11y": "playwright test e2e/a11y.spec.ts e2e/a11y-keyboard.spec.ts",
+    "test:a11y:smoke": "playwright test e2e/a11y.spec.ts e2e/a11y-keyboard.spec.ts --project=chromium-desktop",
+    "test:screenshots": "playwright test e2e/screenshots.spec.ts --grep @screenshot --project=chromium-desktop"
+  },
+  "dependencies": {
+    "@rupeeroute/api-contracts": "workspace:*",
+    "@rupeeroute/design-system": "workspace:*",
+    "next": "^15.2.2",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.51.0",
+    "@testing-library/react": "^16.2.0",
+    "@types/node": "^22.13.10",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "jsdom": "^26.0.0",
+    "vitest": "^3.0.8"
+  }
+}

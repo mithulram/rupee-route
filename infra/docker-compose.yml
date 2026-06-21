@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rupeeroute-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: rupeeroute
+      POSTGRES_PASSWORD: rupeeroute
+      POSTGRES_DB: rupeeroute
+    volumes:
+      - rupeeroute_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rupeeroute -d rupeeroute']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: rupeeroute-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - rupeeroute_redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  rupeeroute_pg_data:
+  rupeeroute_redis_data:

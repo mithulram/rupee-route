@@ -1,0 +1,13 @@
+appId: com.rupeeroute.sandbox
+---
+- runFlow:
+    file: login.yaml
+    env:
+      MAESTRO_TEST_EMAIL: ${MAESTRO_TEST_EMAIL}
+      MAESTRO_TEST_PASSWORD: ${MAESTRO_TEST_PASSWORD}
+- tapOn:
+    text: Coupons
+- assertVisible:
+    id: coupons-tab
+- assertVisible:
+    text: Coupons & promotions

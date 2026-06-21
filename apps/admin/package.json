@@ -1,0 +1,26 @@
+{
+  "name": "@rupeeroute/admin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --port 3003",
+    "start": "next start --port 3003",
+    "lint": "eslint src --max-warnings 0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@rupeeroute/api-contracts": "workspace:*",
+    "@rupeeroute/design-system": "workspace:*",
+    "next": "^15.2.2",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "vitest": "^3.0.8"
+  }
+}

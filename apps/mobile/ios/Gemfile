@@ -1,0 +1,4 @@
+source 'https://rubygems.org'
+
+# RN 0.76 hermes-engine.podspec uses spec.visionos (requires CocoaPods >= 1.15)
+gem 'cocoapods', '~> 1.16'

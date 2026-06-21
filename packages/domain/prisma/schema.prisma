@@ -1,0 +1,379 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Sandbox consumer account (DE/CH corridor).
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  countryCode  String      @map("country_code") @db.VarChar(2)
+  kycStatus    String      @default("pending") @map("kyc_status")
+  preferredLanguage String @default("en") @map("preferred_language")
+  notificationEmail Boolean @default(true) @map("notification_email")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+  auditEvents  AuditEvent[]
+  recipients   Recipient[]
+  transfers    Transfer[]
+  complianceReviews ComplianceReview[]
+  privacyRequests   PrivacyRequest[]
+  supportTickets    CustomerSupportTicket[]
+
+  @@map("users")
+}
+
+/// INR recipient — bank account or UPI.
+model Recipient {
+  id            String     @id @default(cuid())
+  userId        String     @map("user_id")
+  user          User       @relation(fields: [userId], references: [id])
+  displayName   String     @map("display_name")
+  type          String     // bank_account | upi
+  accountHolder String     @map("account_holder")
+  ifsc          String?    // required for bank_account
+  accountNumber String?    @map("account_number")
+  upiId         String?    @map("upi_id")
+  validated     Boolean    @default(false)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  transfers     Transfer[]
+
+  @@index([userId])
+  @@map("recipients")
+}
+
+/// FX quote with disclosed margin. Expires after ttl.
+model Quote {
+  id                  String    @id @default(cuid())
+  userId              String    @map("user_id")
+  sourceCurrency      String    @map("source_currency") @db.VarChar(3)
+  targetCurrency      String    @default("INR") @map("target_currency") @db.VarChar(3)
+  sourceAmountMinor   BigInt    @map("source_amount_minor")
+  targetAmountMinor   BigInt    @map("target_amount_minor")
+  midRate             String    @map("mid_rate")
+  customerRate        String    @map("customer_rate")
+  marginBps           Int       @map("margin_bps")
+  marginPercent       String    @map("margin_percent")
+  couponCode          String?   @map("coupon_code")
+  expiresAt           DateTime  @map("expires_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  transfer            Transfer?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("quotes")
+}
+
+/// Remittance transfer aggregate.
+model Transfer {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id])
+  quoteId         String    @unique @map("quote_id")
+  quote           Quote     @relation(fields: [quoteId], references: [id])
+  recipientId     String?   @map("recipient_id")
+  recipient       Recipient? @relation(fields: [recipientId], references: [id])
+  state           String
+  idempotencyKey  String    @unique @map("idempotency_key")
+  correlationId   String    @map("correlation_id")
+  failureReason   String?   @map("failure_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  stateHistory    TransferStateHistory[]
+  ledgerEntries   LedgerEntry[]
+  webhookEvents   WebhookEvent[]
+  supportTickets  SupportTicket[]
+  complianceReviews ComplianceReview[]
+  refundProposals RefundProposal[]
+  customerTickets CustomerSupportTicket[]
+
+  @@index([userId])
+  @@index([state])
+  @@index([correlationId])
+  @@map("transfers")
+}
+
+/// Append-only transfer state history.
+model TransferStateHistory {
+  id          String   @id @default(cuid())
+  transferId  String   @map("transfer_id")
+  transfer    Transfer @relation(fields: [transferId], references: [id])
+  fromState   String?  @map("from_state")
+  toState     String   @map("to_state")
+  actorType   String   @map("actor_type")
+  actorId     String?  @map("actor_id")
+  reason      String?
+  occurredAt  DateTime @default(now()) @map("occurred_at")
+
+  @@index([transferId])
+  @@map("transfer_state_history")
+}
+
+/// Operational ledger account.
+model LedgerAccount {
+  id        String        @id @default(cuid())
+  code      String        @unique
+  name      String
+  currency  String        @db.VarChar(3)
+  entries   LedgerEntry[]
+
+  @@map("ledger_accounts")
+}
+
+/// Double-entry ledger line (immutable).
+model LedgerEntry {
+  id            String        @id @default(cuid())
+  journalId     String        @map("journal_id")
+  accountId     String        @map("account_id")
+  account         LedgerAccount @relation(fields: [accountId], references: [id])
+  transferId    String        @map("transfer_id")
+  transfer        Transfer      @relation(fields: [transferId], references: [id])
+  direction     String        // debit | credit
+  amountMinor   BigInt        @map("amount_minor")
+  currency      String        @db.VarChar(3)
+  description   String
+  idempotencyKey String       @map("idempotency_key")
+  postedAt      DateTime      @default(now()) @map("posted_at")
+
+  @@unique([idempotencyKey, accountId, direction])
+  @@index([transferId])
+  @@index([journalId])
+  @@map("ledger_entries")
+}
+
+/// Stored provider webhook for dedup and audit.
+model WebhookEvent {
+  id              String   @id @default(cuid())
+  providerEventId String   @map("provider_event_id")
+  transferId      String?  @map("transfer_id")
+  transfer        Transfer? @relation(fields: [transferId], references: [id])
+  eventType       String   @map("event_type")
+  payload         Json
+  signature       String
+  processed       Boolean  @default(false)
+  processedAt     DateTime? @map("processed_at")
+  receivedAt      DateTime @default(now()) @map("received_at")
+
+  @@unique([providerEventId])
+  @@index([transferId])
+  @@map("webhook_events")
+}
+
+/// Append-only audit trail.
+model AuditEvent {
+  id            String   @id @default(cuid())
+  eventType     String   @map("event_type")
+  actorType     String   @map("actor_type")
+  actorId       String?  @map("actor_id")
+  resourceType  String   @map("resource_type")
+  resourceId    String   @map("resource_id")
+  correlationId String   @map("correlation_id")
+  payload       Json
+  occurredAt    DateTime @default(now()) @map("occurred_at")
+  userId        String?  @map("user_id")
+  user          User?    @relation(fields: [userId], references: [id])
+
+  @@index([resourceType, resourceId])
+  @@index([correlationId])
+  @@index([occurredAt])
+  @@map("audit_events")
+}
+
+/// Idempotency record for mutating API operations.
+model IdempotencyKey {
+  id           String   @id @default(cuid())
+  key          String   @unique
+  requestHash  String   @map("request_hash")
+  responseBody Json?    @map("response_body")
+  statusCode   Int?     @map("status_code")
+  createdAt    DateTime @default(now()) @map("created_at")
+  expiresAt    DateTime @map("expires_at")
+
+  @@map("idempotency_keys")
+}
+
+/// Internal staff account with RBAC roles.
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  roles        String[]
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  ticketsCreated     SupportTicket[]     @relation("TicketCreator")
+  ticketComments     TicketComment[]
+  complianceDecisions ComplianceReview[] @relation("ComplianceDecider")
+  refundProposals    RefundProposal[]    @relation("RefundProposer")
+  refundApprovals    RefundProposal[]    @relation("RefundApprover")
+
+  @@map("admin_users")
+}
+
+/// Support ticket with optional transfer context.
+model SupportTicket {
+  id            String          @id @default(cuid())
+  subject       String
+  description   String
+  status        String          @default("open")
+  priority      String          @default("medium")
+  transferId    String?         @map("transfer_id")
+  transfer      Transfer?       @relation(fields: [transferId], references: [id])
+  createdById   String          @map("created_by_id")
+  createdBy     AdminUser       @relation("TicketCreator", fields: [createdById], references: [id])
+  assigneeEmail String?         @map("assignee_email")
+  comments      TicketComment[]
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  @@index([transferId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+model TicketComment {
+  id        String        @id @default(cuid())
+  ticketId  String        @map("ticket_id")
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id])
+  authorId  String        @map("author_id")
+  author    AdminUser     @relation(fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([ticketId])
+  @@map("ticket_comments")
+}
+
+/// Compliance review queue item.
+model ComplianceReview {
+  id          String     @id @default(cuid())
+  userId      String     @map("user_id")
+  user        User       @relation(fields: [userId], references: [id])
+  transferId  String?    @map("transfer_id")
+  transfer    Transfer?  @relation(fields: [transferId], references: [id])
+  status      String     @default("pending")
+  riskScore   Int        @default(0) @map("risk_score")
+  flags       String[]
+  decidedById String?    @map("decided_by_id")
+  decidedBy   AdminUser? @relation("ComplianceDecider", fields: [decidedById], references: [id])
+  decidedAt   DateTime?  @map("decided_at")
+  submittedAt DateTime   @default(now()) @map("submitted_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("compliance_reviews")
+}
+
+/// Reconciliation batch run.
+model ReconciliationRun {
+  id             String                    @id @default(cuid())
+  status         String                    @default("running")
+  startedAt      DateTime                  @default(now()) @map("started_at")
+  completedAt    DateTime?                 @map("completed_at")
+  exceptionCount Int                       @default(0) @map("exception_count")
+  exceptions     ReconciliationException[]
+
+  @@map("reconciliation_runs")
+}
+
+model ReconciliationException {
+  id          String            @id @default(cuid())
+  runId       String            @map("run_id")
+  run         ReconciliationRun @relation(fields: [runId], references: [id])
+  transferId  String            @map("transfer_id")
+  type        String
+  amountDelta String            @map("amount_delta")
+  status      String            @default("open")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@index([runId])
+  @@index([transferId])
+  @@map("reconciliation_exceptions")
+}
+
+/// Dead-letter record for failed webhook processing.
+model WebhookFailure {
+  id              String   @id @default(cuid())
+  providerEventId String?  @map("provider_event_id")
+  provider        String   @default("sandbox")
+  eventType       String   @map("event_type")
+  transferId      String?  @map("transfer_id")
+  payload         Json
+  failureReason   String   @map("failure_reason")
+  retryCount      Int      @default(0) @map("retry_count")
+  lastAttemptAt   DateTime @default(now()) @map("last_attempt_at")
+  resolved        Boolean  @default(false)
+
+  @@index([transferId])
+  @@index([resolved])
+  @@map("webhook_failures")
+}
+
+/// Finance-initiated refund proposal workflow.
+model RefundProposal {
+  id           String     @id @default(cuid())
+  transferId   String     @map("transfer_id")
+  transfer     Transfer   @relation(fields: [transferId], references: [id])
+  amountMinor  BigInt     @map("amount_minor")
+  currency     String     @db.VarChar(3)
+  reason       String
+  status       String     @default("pending")
+  proposedById String     @map("proposed_by_id")
+  proposedBy   AdminUser  @relation("RefundProposer", fields: [proposedById], references: [id])
+  approvedById String?    @map("approved_by_id")
+  approvedBy   AdminUser? @relation("RefundApprover", fields: [approvedById], references: [id])
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@index([transferId])
+  @@index([status])
+  @@map("refund_proposals")
+}
+
+/// Runtime feature flag kill switches.
+model FeatureFlagRecord {
+  key         String   @id
+  enabled     Boolean  @default(true)
+  description String
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_flag_records")
+}
+
+/// GDPR-style privacy request tracking.
+model PrivacyRequest {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id])
+  type        String
+  status      String    @default("pending")
+  requestedAt DateTime  @default(now()) @map("requested_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("privacy_requests")
+}
+
+/// Customer-initiated support ticket (separate from admin support queue).
+model CustomerSupportTicket {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id])
+  subject     String
+  description String
+  status      String    @default("open")
+  transferId  String?   @map("transfer_id")
+  transfer    Transfer? @relation(fields: [transferId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("customer_support_tickets")
+}

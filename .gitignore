@@ -1,0 +1,46 @@
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+.env
+.env.local
+.env.*.local
+!.env.example
+apps/*/.env
+apps/*/.env.local
+packages/domain/.env
+.DS_Store
+*.log
+
+# Sandbox test credentials (auto-generated locally)
+docs/evidence/.maestro-credentials.env
+
+# Local evidence runs (keep MOBILE_TEST_EVIDENCE.md; ignore generated logs)
+docs/evidence/maestro-*/
+docs/evidence/mobile-offline-*/
+docs/evidence/*-latest.log
+docs/evidence/*.log
+
+# Expo / React Native
+.expo/
+.expo-shared/
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+apps/mobile/ios/build/
+apps/mobile/ios/Pods/
+apps/mobile/android/build/
+apps/mobile/android/.gradle/
+
+# Playwright
+apps/web/test-results/
+apps/web/playwright-report/
+
+# Prisma local DBs
+apps/api/prisma/*.db
+packages/domain/prisma/*.db
+
+# Security scan artifacts
+sbom.json

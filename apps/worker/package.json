@@ -1,0 +1,25 @@
+{
+  "name": "@rupeeroute/worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "sh -c 'set -a && . ./.env && set +a && exec tsx watch src/main.ts'",
+    "start": "sh -c 'set -a && . ./.env && set +a && exec node dist/main.js'",
+    "lint": "eslint src --max-warnings 0",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@rupeeroute/config": "workspace:*",
+    "@rupeeroute/domain": "workspace:*",
+    "@rupeeroute/observability": "workspace:*",
+    "@rupeeroute/provider-sdk": "workspace:*",
+    "bullmq": "^5.41.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "vitest": "^3.0.8"
+  }
+}

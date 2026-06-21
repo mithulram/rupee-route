@@ -1,0 +1,30 @@
+appId: com.rupeeroute.sandbox
+---
+- runFlow:
+    file: login.yaml
+    env:
+      MAESTRO_TEST_EMAIL: ${MAESTRO_TEST_EMAIL}
+      MAESTRO_TEST_PASSWORD: ${MAESTRO_TEST_PASSWORD}
+- tapOn:
+    text: Send money
+- assertVisible:
+    id: send-amount-screen
+- tapOn:
+    text: EUR
+- tapOn:
+    text: Amount in EUR
+- inputText: '100'
+- tapOn:
+    text: Get quote
+- assertVisible:
+    id: send-quote-screen
+- tapOn:
+    text: Continue to recipient
+- assertVisible:
+    id: send-recipient-screen
+- tapOn:
+    text: ${MAESTRO_RECIPIENT_NAME}
+- tapOn:
+    text: Continue to review
+- assertVisible:
+    id: send-review-screen

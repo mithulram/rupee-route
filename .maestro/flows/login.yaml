@@ -1,0 +1,17 @@
+appId: com.rupeeroute.sandbox
+---
+# Sandbox login smoke — requires a registered user and running API.
+# Override credentials via env: MAESTRO_TEST_EMAIL / MAESTRO_TEST_PASSWORD
+- launchApp
+- assertVisible:
+    id: login-screen
+- tapOn:
+    text: Email
+- inputText: ${MAESTRO_TEST_EMAIL}
+- tapOn:
+    text: Password
+- inputText: ${MAESTRO_TEST_PASSWORD}
+- tapOn:
+    text: Sign in
+- assertVisible:
+    id: home-tab

@@ -1,0 +1,44 @@
+{
+  "name": "rupee-route",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:api": "turbo run dev --filter=@rupeeroute/api",
+    "dev:worker": "turbo run dev --filter=@rupeeroute/worker",
+    "dev:web": "turbo run dev --filter=@rupeeroute/web",
+    "dev:admin": "turbo run dev --filter=@rupeeroute/admin",
+    "dev:mobile": "turbo run dev --filter=@rupeeroute/mobile",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "db:generate": "pnpm --filter @rupeeroute/domain db:generate",
+    "db:migrate": "pnpm --filter @rupeeroute/domain db:migrate",
+    "db:push": "pnpm --filter @rupeeroute/domain db:push",
+    "docker:up": "docker compose -f infra/docker-compose.yml up -d",
+    "docker:down": "docker compose -f infra/docker-compose.yml down",
+    "setup": "bash scripts/setup-local.sh",
+    "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.0.2",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.5.3",
+    "turbo": "^2.4.4",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.0"
+  }
+}

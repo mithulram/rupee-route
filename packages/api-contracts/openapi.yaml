@@ -1,0 +1,412 @@
+openapi: 3.1.0
+info:
+  title: RupeeRoute API
+  version: 0.1.0
+  description: |
+    Sandbox remittance API for verified consumers in Germany (EUR) and Switzerland (CHF)
+    sending to INR recipients in India. No live payment credentials or real money movement.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: http://localhost:3001
+    description: Local development
+tags:
+  - name: Health
+  - name: Auth
+  - name: Profile
+  - name: Quotes
+  - name: Recipients
+  - name: Transfers
+  - name: Webhooks
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register sandbox consumer (DE/CH)
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/me:
+    get:
+      tags: [Profile]
+      summary: Get authenticated consumer profile
+      operationId: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/quotes:
+    post:
+      tags: [Quotes]
+      summary: Create FX quote (EUR/CHF → INR)
+      operationId: createQuote
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuoteRequest'
+      responses:
+        '200':
+          description: Quote created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+  /api/v1/recipients:
+    get:
+      tags: [Recipients]
+      summary: List recipients
+      operationId: listRecipients
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Recipient list
+    post:
+      tags: [Recipients]
+      summary: Create INR recipient
+      operationId: createRecipient
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecipientRequest'
+      responses:
+        '200':
+          description: Recipient created
+  /api/v1/transfers:
+    post:
+      tags: [Transfers]
+      summary: Create transfer draft from quote
+      operationId: createTransferDraft
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransferRequest'
+      responses:
+        '200':
+          description: Transfer draft
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+  /api/v1/transfers/{id}:
+    get:
+      tags: [Transfers]
+      summary: Get transfer details
+      operationId: getTransfer
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Transfer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferDetailResponse'
+  /api/v1/transfers/{id}/recipient:
+    post:
+      tags: [Transfers]
+      summary: Attach validated recipient
+      operationId: attachRecipient
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttachRecipientRequest'
+      responses:
+        '200':
+          description: Updated transfer
+  /api/v1/transfers/{id}/confirm:
+    post:
+      tags: [Transfers]
+      summary: Confirm transfer (moves to funding_pending)
+      operationId: confirmTransfer
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+        - in: header
+          name: Idempotency-Key
+          schema: { type: string }
+      responses:
+        '200':
+          description: Transfer confirmed; funding initiated
+  /api/v1/transfers/{id}/cancel:
+    post:
+      tags: [Transfers]
+      summary: Cancel transfer
+      operationId: cancelTransfer
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Transfer cancelled
+  /api/v1/webhooks/provider:
+    post:
+      tags: [Webhooks]
+      summary: Provider webhook ingress (signed)
+      operationId: receiveProviderWebhook
+      parameters:
+        - in: header
+          name: x-webhook-signature
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProviderWebhookPayload'
+      responses:
+        '200':
+          description: Webhook accepted
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, sandboxMode]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+        sandboxMode:
+          type: boolean
+        liveTransfersEnabled:
+          type: boolean
+    RegisterRequest:
+      type: object
+      required: [email, password, countryCode]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        countryCode:
+          type: string
+          enum: [DE, CH]
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      required: [accessToken, tokenType, user]
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          enum: [Bearer]
+        user:
+          $ref: '#/components/schemas/UserProfile'
+    UserProfile:
+      type: object
+      required: [id, email, countryCode]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        countryCode:
+          type: string
+          enum: [DE, CH]
+    ErrorResponse:
+      type: object
+      required: [message, code]
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+    CreateQuoteRequest:
+      type: object
+      required: [sourceCurrency, sourceAmountMinor]
+      properties:
+        sourceCurrency:
+          type: string
+          enum: [EUR, CHF]
+        sourceAmountMinor:
+          type: string
+          description: Integer minor units as string
+    QuoteResponse:
+      type: object
+      properties:
+        id: { type: string }
+        sourceCurrency: { type: string }
+        targetCurrency: { type: string }
+        sourceAmountMinor: { type: string }
+        targetAmountMinor: { type: string }
+        midRate: { type: string }
+        customerRate: { type: string }
+        marginBps: { type: integer }
+        marginPercent: { type: string }
+        marginDisclosure: { type: string }
+        expiresAt: { type: string, format: date-time }
+    CreateRecipientRequest:
+      type: object
+      required: [type, displayName, accountHolder]
+      properties:
+        type: { type: string, enum: [bank_account, upi] }
+        displayName: { type: string }
+        accountHolder: { type: string }
+        ifsc: { type: string }
+        accountNumber: { type: string }
+        upiId: { type: string }
+    CreateTransferRequest:
+      type: object
+      required: [quoteId]
+      properties:
+        quoteId: { type: string }
+    AttachRecipientRequest:
+      type: object
+      required: [recipientId]
+      properties:
+        recipientId: { type: string }
+    TransferResponse:
+      type: object
+      properties:
+        id: { type: string }
+        state: { type: string }
+        quoteId: { type: string }
+        recipientId: { type: string, nullable: true }
+        correlationId: { type: string }
+    TransferDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/TransferResponse'
+        - type: object
+          properties:
+            stateHistory:
+              type: array
+              items:
+                type: object
+    ProviderWebhookPayload:
+      type: object
+      required: [eventId, eventType, transferId, correlationId, occurredAt]
+      properties:
+        eventId: { type: string }
+        eventType: { type: string }
+        transferId: { type: string }
+        correlationId: { type: string }
+        occurredAt: { type: string, format: date-time }

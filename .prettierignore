@@ -1,0 +1,10 @@
+node_modules
+dist
+.next
+.turbo
+coverage
+pnpm-lock.yaml
+packages/domain/prisma/migrations
+apps/web/test-results
+apps/web/playwright-report
+docs/evidence/maestro-*

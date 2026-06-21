@@ -1,0 +1,17 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "typeRoots": ["./node_modules/@types"],
+    "paths": {
+      "react": ["./node_modules/react"],
+      "react/*": ["./node_modules/react/*"]
+    }
+  },
+  "include": ["app/**/*.ts", "app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx", "vitest.config.ts"],
+  "exclude": ["src/__tests__/**"]
+}

@@ -1,0 +1,21 @@
+appId: com.rupeeroute.sandbox
+---
+# Send flow smoke — logs in (if needed) and reaches the quote step.
+- runFlow:
+    file: login.yaml
+    env:
+      MAESTRO_TEST_EMAIL: ${MAESTRO_TEST_EMAIL}
+      MAESTRO_TEST_PASSWORD: ${MAESTRO_TEST_PASSWORD}
+- tapOn:
+    text: Send money
+- assertVisible:
+    id: send-amount-screen
+- tapOn:
+    text: EUR
+- tapOn:
+    text: Amount in EUR
+- inputText: '100'
+- tapOn:
+    text: Get quote
+- assertVisible:
+    id: send-quote-screen

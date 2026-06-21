@@ -1,0 +1,58 @@
+/** RupeeRoute design tokens — shared across web, admin, and mobile (via CSS vars / theme). */
+export const tokens = {
+  color: {
+    brandPrimary: '#0B3D4C',
+    brandSecondary: '#1A7F8E',
+    brandAccent: '#C4A962',
+    surfaceDefault: '#FFFFFF',
+    surfaceMuted: '#F4F7F8',
+    surfaceInverse: '#0F1720',
+    textPrimary: '#0F1720',
+    textSecondary: '#4A5568',
+    textInverse: '#FFFFFF',
+    borderDefault: '#D1D9DE',
+    statusSuccess: '#1F7A4D',
+    statusWarning: '#B7791F',
+    statusError: '#C53030',
+    statusInfo: '#2B6CB0',
+    sandboxBanner: '#FFF3CD',
+    sandboxBannerText: '#744210',
+  },
+  typography: {
+    fontFamilySans: "'Inter', 'Segoe UI', system-ui, sans-serif",
+    fontFamilyMono: "'JetBrains Mono', 'SF Mono', monospace",
+    fontSizeXs: '0.75rem',
+    fontSizeSm: '0.875rem',
+    fontSizeMd: '1rem',
+    fontSizeLg: '1.25rem',
+    fontSizeXl: '1.5rem',
+    fontSize2xl: '2rem',
+    lineHeightTight: 1.25,
+    lineHeightNormal: 1.5,
+    fontWeightRegular: 400,
+    fontWeightMedium: 500,
+    fontWeightSemibold: 600,
+    fontWeightBold: 700,
+  },
+  spacing: {
+    xs: '0.25rem',
+    sm: '0.5rem',
+    md: '1rem',
+    lg: '1.5rem',
+    xl: '2rem',
+    '2xl': '3rem',
+  },
+  radius: {
+    sm: '0.375rem',
+    md: '0.5rem',
+    lg: '0.75rem',
+    full: '9999px',
+  },
+  shadow: {
+    sm: '0 1px 2px rgba(15, 23, 32, 0.06)',
+    md: '0 4px 12px rgba(15, 23, 32, 0.08)',
+    lg: '0 12px 32px rgba(15, 23, 32, 0.12)',
+  },
+} as const;
+
+export type DesignTokens = typeof tokens;

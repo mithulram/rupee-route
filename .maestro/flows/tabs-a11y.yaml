@@ -1,0 +1,20 @@
+appId: com.rupeeroute.sandbox
+---
+# Accessibility smoke — large text labels and tab navigation
+- runFlow:
+    file: login.yaml
+    env:
+      MAESTRO_TEST_EMAIL: ${MAESTRO_TEST_EMAIL}
+      MAESTRO_TEST_PASSWORD: ${MAESTRO_TEST_PASSWORD}
+- tapOn:
+    text: Activity
+- tapOn:
+    text: Recipients
+- tapOn:
+    text: Help
+- tapOn:
+    text: Settings
+- assertVisible:
+    id: settings-tab
+- tapOn:
+    text: Home
