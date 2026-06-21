@@ -45,3 +45,6 @@ packages/domain/prisma/*.db
 
 # Security scan artifacts
 sbom.json
+
+# Vercel local link metadata (project id only — no secrets)
+.vercel

@@ -166,3 +166,17 @@ OpenAPI: `packages/api-contracts/openapi.yaml`
 ## CI
 
 `.github/workflows/ci.yml` — install, migrate (Postgres + Redis), lint, typecheck, test, build, secret scan, SBOM, audit, Trivy.
+
+## Sandbox deployment
+
+| Layer                           | Platform                                     | Status                                                        |
+| ------------------------------- | -------------------------------------------- | ------------------------------------------------------------- |
+| Customer web                    | [Vercel](https://vercel.com) (`apps/web`)    | Config ready — see [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) |
+| API + worker + Postgres + Redis | [Render](https://render.com) (`render.yaml`) | Blueprint ready — **requires Render account**                 |
+| Admin console                   | Not deployed                                 | Local only                                                    |
+
+**Deploy order:** Render backend → set `WEB_CORS_ORIGINS` + Vercel `NEXT_PUBLIC_API_URL` (HTTPS only) → Vercel web → `bash scripts/deploy-smoke.sh`.
+
+**Production URL:** _Pending backend deploy — do not use localhost API URLs on Vercel._
+
+Sandbox constraints: `LIVE_TRANSFERS_ENABLED=false`, no live credentials, no public admin.

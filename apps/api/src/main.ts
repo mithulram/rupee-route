@@ -6,6 +6,7 @@ import { apiEnvSchema, assertSandboxMode, parseEnv, resolveFeatureFlags } from '
 import { createCorrelationMiddleware, createLogger } from '@rupeeroute/observability';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { resolveCorsOrigins } from './cors';
 import { buildHelmetConfig } from './security/helmet.config';
 
 async function bootstrap() {
@@ -31,7 +32,7 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3003', 'http://localhost:8081'],
+    origin: resolveCorsOrigins(),
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
@@ -54,8 +55,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(env.API_PORT);
-  logger.info({ port: env.API_PORT, sandboxMode: !flags.liveTransfersEnabled }, 'API started');
+  const port = process.env.PORT ? Number(process.env.PORT) : env.API_PORT;
+  await app.listen(port);
+  logger.info({ port, sandboxMode: !flags.liveTransfersEnabled }, 'API started');
 }
 
 void bootstrap();

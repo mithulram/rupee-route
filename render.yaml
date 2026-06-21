@@ -1,0 +1,83 @@
+# Render Blueprint — RupeeRoute sandbox backend (API + worker + Postgres + Redis)
+# Deploy: connect Render to GitHub repo, apply blueprint, then set JWT_SECRET + WEBHOOK_SIGNING_SECRET.
+# Do NOT set LIVE_TRANSFERS_ENABLED=true.
+
+databases:
+  - name: rupeeroute-postgres
+    plan: free
+    databaseName: rupeeroute
+    user: rupeeroute
+
+services:
+  - type: redis
+    name: rupeeroute-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  - type: web
+    name: rupeeroute-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./infra/docker/Dockerfile.api
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: LIVE_TRANSFERS_ENABLED
+        value: 'false'
+      - key: SANDBOX_FORCE_KYC_APPROVED
+        value: 'true'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rupeeroute-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rupeeroute-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: WEBHOOK_SIGNING_SECRET
+        generateValue: true
+      - key: WEB_CORS_ORIGINS
+        sync: false
+        # Set after Vercel deploy, e.g. https://rupee-route-web.vercel.app
+
+  - type: worker
+    name: rupeeroute-worker
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./infra/docker/Dockerfile.worker
+    dockerContext: .
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: LIVE_TRANSFERS_ENABLED
+        value: 'false'
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rupeeroute-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: rupeeroute-redis
+          property: connectionString
+      - key: WEBHOOK_SIGNING_SECRET
+        fromService:
+          type: web
+          name: rupeeroute-api
+          envVarKey: WEBHOOK_SIGNING_SECRET
+      - key: WORKER_PORT
+        value: '3002'
