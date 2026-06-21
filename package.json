@@ -6,6 +6,11 @@
     "node": ">=22.0.0",
     "pnpm": ">=9.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "tar": ">=7.5.7"
+    }
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",

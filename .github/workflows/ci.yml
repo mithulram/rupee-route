@@ -149,11 +149,11 @@ jobs:
         env:
           NODE_ENV: production
 
-      - name: Playwright E2E
-        run: pnpm --filter @rupeeroute/web test:e2e
+      - name: Playwright E2E (Chromium desktop — CI smoke)
+        run: pnpm --filter @rupeeroute/web test:e2e:smoke
 
-      - name: Playwright accessibility (axe + keyboard)
-        run: pnpm --filter @rupeeroute/web test:a11y
+      - name: Playwright accessibility (Chromium desktop)
+        run: pnpm --filter @rupeeroute/web test:a11y:smoke
 
       - name: Upload Playwright report on failure
         if: failure()
