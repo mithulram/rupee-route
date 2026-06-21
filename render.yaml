@@ -5,6 +5,7 @@
 databases:
   - name: rupeeroute-postgres
     plan: free
+    region: oregon
     databaseName: rupeeroute
     user: rupeeroute
 
@@ -12,6 +13,7 @@ services:
   - type: redis
     name: rupeeroute-redis
     plan: free
+    region: oregon
     maxmemoryPolicy: allkeys-lru
     ipAllowList: []
 
@@ -19,7 +21,7 @@ services:
     name: rupeeroute-api
     runtime: docker
     plan: free
-    region: frankfurt
+    region: oregon
     dockerfilePath: ./infra/docker/Dockerfile.api
     dockerContext: .
     healthCheckPath: /health
@@ -47,14 +49,13 @@ services:
       - key: WEBHOOK_SIGNING_SECRET
         generateValue: true
       - key: WEB_CORS_ORIGINS
-        sync: false
-        # Set after Vercel deploy, e.g. https://rupee-route-web.vercel.app
+        value: https://rupee-route-web.vercel.app
 
   - type: worker
     name: rupeeroute-worker
     runtime: docker
     plan: free
-    region: frankfurt
+    region: oregon
     dockerfilePath: ./infra/docker/Dockerfile.worker
     dockerContext: .
     autoDeploy: true
