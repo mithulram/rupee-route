@@ -15,7 +15,10 @@ services:
     plan: free
     region: oregon
     maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
+    # Required while Frankfurt API uses external REDIS_URL (cross-region). Auth is via connection-string password.
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: sandbox-external-api
 
   - type: web
     name: rupeeroute-api
@@ -39,15 +42,9 @@ services:
         value: 'true'
       - key: WORKER_PORT
         value: '3002'
-      - key: DATABASE_URL
-        fromDatabase:
-          name: rupeeroute-postgres
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: rupeeroute-redis
-          property: connectionString
+      # DATABASE_URL and REDIS_URL are NOT declared here — the live Frankfurt API uses
+      # manually set external connection strings (Oregon Postgres/Redis). Omitting them
+      # prevents Blueprint sync from overwriting working cross-region values. See docs/DEPLOYMENT.md.
       - key: JWT_SECRET
         generateValue: true
       - key: WEBHOOK_SIGNING_SECRET
