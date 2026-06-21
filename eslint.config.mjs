@@ -13,6 +13,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/.turbo/**',
       '**/coverage/**',
+      '**/vitest.config.ts',
       'apps/mobile/.expo/**',
       'packages/domain/src/generated/**',
     ],

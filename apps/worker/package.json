@@ -2,6 +2,12 @@
   "name": "@rupeeroute/worker",
   "version": "0.1.0",
   "private": true,
+  "exports": {
+    "./sandbox-worker": {
+      "types": "./dist/sandbox-worker.d.ts",
+      "default": "./dist/sandbox-worker.js"
+    }
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "sh -c 'set -a; [ -f ./.env ] && . ./.env; set +a && exec tsx watch src/main.ts'",

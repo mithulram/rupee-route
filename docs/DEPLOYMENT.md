@@ -4,47 +4,66 @@
 
 ## Architecture
 
-| Component                    | Platform            | Public URL                           |
-| ---------------------------- | ------------------- | ------------------------------------ |
-| Customer web (`apps/web`)    | **Vercel**          | `https://<project>.vercel.app`       |
-| Nest API (`apps/api`)        | **Render** (Docker) | `https://<api-service>.onrender.com` |
-| Worker (`apps/worker`)       | **Render** (Docker) | Internal only (health on `:3002`)    |
-| PostgreSQL                   | Render managed      | Private connection string            |
-| Redis                        | Render managed      | Private connection string            |
-| Admin console (`apps/admin`) | **Not deployed**    | Local / VPN only                     |
+| Component                         | Platform                    | Public URL                               |
+| --------------------------------- | --------------------------- | ---------------------------------------- |
+| Customer web (`apps/web`)         | **Vercel**                  | `https://<project>.vercel.app`           |
+| Nest API (`apps/api`)             | **Render** (Docker)         | `https://<api-service>.onrender.com`     |
+| Embedded sandbox worker           | **Inside API container**    | BullMQ consumer on `:3002` (health only) |
+| Standalone worker (`apps/worker`) | **Not on Render free plan** | Use for paid/production hosting          |
+| PostgreSQL                        | Render managed              | Private connection string                |
+| Redis                             | Render managed              | Private connection string                |
+| Admin console (`apps/admin`)      | **Not deployed**            | Local / VPN only                         |
+
+### Free Render sandbox mode
+
+Render’s free plan does **not** support a separate always-on `type: worker` service. Sandbox deployments use **combined-worker mode**:
+
+- `SANDBOX_COMBINED_WORKER=true` on the API service
+- `infra/docker/start-sandbox-api.sh` runs migrations, starts the existing worker process in the background, then starts the API in the foreground
+- `WORKER_PORT=3002` for the embedded worker health endpoint (internal only)
+- SIGTERM shuts down both processes cleanly
+
+The standalone worker Dockerfile (`infra/docker/Dockerfile.worker`) and `apps/worker` package are unchanged for future paid/production hosting where API and worker run as separate services.
+
+### Production / real-money hosting
+
+Real-money production requires:
+
+- A **separate always-on worker** service (not embedded)
+- `SANDBOX_COMBINED_WORKER` unset or `false` on the API
+- `LIVE_TRANSFERS_ENABLED=false` until regulatory authorization and live provider credentials are in place — **never enable live transfers in this repository’s sandbox deployment**
 
 Deploy order:
 
-1. **Backend** (Render blueprint) — Postgres, Redis, API, worker
+1. **Backend** (Render blueprint) — Postgres, Redis, API with embedded worker
 2. **Set `WEB_CORS_ORIGINS`** on API to your Vercel HTTPS origin(s)
 3. **Vercel web** — set `NEXT_PUBLIC_API_URL` to the Render API HTTPS URL
 4. **Smoke tests** — `bash scripts/deploy-smoke.sh`
+5. **Transfer flow** — confirm → funding webhook → tracking (requires Redis + embedded worker)
 
 ## Prerequisites
 
 ### Vercel (customer web)
 
-- Account: https://vercel.com (authenticated CLI: `vercel whoami`)
+- Account: https://vercel.com
 - GitHub repo connected for Preview (PR) + Production (`main`) deploys
 
-### Render (API + worker + Postgres + Redis)
+### Render (API + Postgres + Redis)
 
 - Account: https://render.com
 - Blueprint deploy from `render.yaml` in repo root
-- **Required access:** Render dashboard or API key to create services
-
-No Render/Railway/Fly credentials were available in this environment — backend deploy stops at blueprint preparation until you connect Render.
+- All services in the **same region** (Oregon in the current blueprint) so internal `connectionString` URLs work
 
 ## 1. Deploy backend (Render)
 
-1. Push this repo to GitHub (`mithulram/rupee-route`).
+1. Push this repo to GitHub.
 2. In Render: **New → Blueprint** → connect repo → apply `render.yaml`.
 3. After deploy, copy the API URL (e.g. `https://rupeeroute-api.onrender.com`).
-4. In Render API service → Environment:
-   - Confirm `LIVE_TRANSFERS_ENABLED=false`
-   - Set `WEB_CORS_ORIGINS` to your Vercel URL(s), comma-separated HTTPS only, e.g.  
-     `https://rupee-route-web.vercel.app,https://rupee-route-web-*.vercel.app`  
-     (Preview URLs: add each preview origin or use a pattern your host supports)
+4. In Render API service → Environment, confirm:
+   - `LIVE_TRANSFERS_ENABLED=false`
+   - `SANDBOX_COMBINED_WORKER=true`
+   - `WORKER_PORT=3002`
+   - `WEB_CORS_ORIGINS` set to your Vercel HTTPS origin(s)
 
 Verify health:
 
@@ -59,23 +78,14 @@ From repo root:
 
 ```bash
 cd apps/web
-vercel link          # create/link project rupee-route-web
-vercel git connect   # GitHub → Preview on PR, Production on main
+vercel link
+vercel git connect
 ```
-
-Set environment variables (**names only** — set values in Vercel dashboard):
 
 | Variable                     | Production           | Preview             | Notes                      |
 | ---------------------------- | -------------------- | ------------------- | -------------------------- |
 | `NEXT_PUBLIC_API_URL`        | Render API HTTPS URL | Same or preview API | **Never** `localhost`      |
 | `NEXT_PUBLIC_SANDBOX_BANNER` | `true`               | `true`              | Always show sandbox banner |
-
-Do **not** deploy production until `NEXT_PUBLIC_API_URL` points to the live sandbox API.
-
-```bash
-# After env vars are set:
-vercel --prod   # production from main only
-```
 
 ## 3. Post-deploy smoke tests
 
@@ -85,17 +95,17 @@ export API_URL="https://rupeeroute-api.onrender.com"
 bash scripts/deploy-smoke.sh
 ```
 
-Checks: API health, `liveTransfersEnabled=false`, web landing, login page.
-
-Full transfer flow (register → send → funding) requires manual or Playwright against deployed URLs.
+Smoke checks cover API health and web landing/login/register. Full transfer flow (register → quote → confirm → funding → tracking) requires the embedded worker and Redis.
 
 ## Environment variable reference (sandbox)
 
-### API (Render)
+### API (Render — includes embedded worker when `SANDBOX_COMBINED_WORKER=true`)
 
 | Name                         | Required   | Example purpose        |
 | ---------------------------- | ---------- | ---------------------- |
 | `LIVE_TRANSFERS_ENABLED`     | yes        | Must be `false`        |
+| `SANDBOX_COMBINED_WORKER`    | yes (free) | `true` — embed worker  |
+| `WORKER_PORT`                | yes (free) | `3002`                 |
 | `SANDBOX_FORCE_KYC_APPROVED` | yes        | `true` for demo KYC    |
 | `DATABASE_URL`               | yes        | From Render Postgres   |
 | `REDIS_URL`                  | yes        | From Render Redis      |
@@ -104,7 +114,7 @@ Full transfer flow (register → send → funding) requires manual or Playwright
 | `WEB_CORS_ORIGINS`           | yes (prod) | HTTPS Vercel origin(s) |
 | `NODE_ENV`                   | yes        | `production`           |
 
-### Worker (Render)
+### Standalone worker (paid / production only)
 
 | Name                     | Required      |
 | ------------------------ | ------------- |
@@ -112,6 +122,9 @@ Full transfer flow (register → send → funding) requires manual or Playwright
 | `DATABASE_URL`           | from Postgres |
 | `REDIS_URL`              | from Redis    |
 | `WEBHOOK_SIGNING_SECRET` | same as API   |
+| `WORKER_PORT`            | `3002`        |
+
+Set `SANDBOX_COMBINED_WORKER=false` (or omit) on the API when using a separate worker service.
 
 ### Web (Vercel)
 
@@ -122,16 +135,16 @@ Full transfer flow (register → send → funding) requires manual or Playwright
 
 ## Blockers checklist
 
-| Blocker                 | Resolution                                                 |
-| ----------------------- | ---------------------------------------------------------- |
-| No Render account       | Sign up at render.com, apply blueprint                     |
-| No Vercel ↔ GitHub link | `vercel git connect` in `apps/web`                         |
-| API URL unset on Vercel | Deploy Render first, then set env                          |
-| CORS errors             | Set `WEB_CORS_ORIGINS` on API to exact Vercel HTTPS origin |
-| Free Render spin-down   | First request after idle may take ~30s                     |
+| Blocker                      | Resolution                                                 |
+| ---------------------------- | ---------------------------------------------------------- |
+| API/Postgres region mismatch | Keep all blueprint services in the same region             |
+| Worker jobs not processing   | Confirm `SANDBOX_COMBINED_WORKER=true` and Redis reachable |
+| CORS errors                  | Set `WEB_CORS_ORIGINS` on API to exact Vercel HTTPS origin |
+| Free Render spin-down        | First request after idle may take ~30s                     |
 
 ## What we do not deploy
 
 - Admin console (`apps/admin`)
+- Separate Render `type: worker` on the free plan
 - Live payment / KYC / FX / payout provider credentials
 - `LIVE_TRANSFERS_ENABLED=true`

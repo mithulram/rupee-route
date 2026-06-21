@@ -48,3 +48,6 @@ sbom.json
 
 # Vercel local link metadata (project id only — no secrets)
 .vercel
+
+# Local git hook helpers (not committed)
+.git-bin/

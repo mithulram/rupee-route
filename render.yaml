@@ -1,5 +1,5 @@
-# Render Blueprint — RupeeRoute sandbox backend (API + worker + Postgres + Redis)
-# Deploy: connect Render to GitHub repo, apply blueprint, then set JWT_SECRET + WEBHOOK_SIGNING_SECRET.
+# Render Blueprint — RupeeRoute sandbox backend (API + embedded worker + Postgres + Redis)
+# Free plan: BullMQ worker runs inside the API container when SANDBOX_COMBINED_WORKER=true.
 # Do NOT set LIVE_TRANSFERS_ENABLED=true.
 
 databases:
@@ -21,7 +21,7 @@ services:
     name: rupeeroute-api
     runtime: docker
     plan: free
-    region: oregon
+    # Region omitted — existing service is Frankfurt; Render does not support in-place region changes.
     dockerfilePath: ./infra/docker/Dockerfile.api
     dockerContext: .
     healthCheckPath: /health
@@ -35,6 +35,10 @@ services:
         value: 'false'
       - key: SANDBOX_FORCE_KYC_APPROVED
         value: 'true'
+      - key: SANDBOX_COMBINED_WORKER
+        value: 'true'
+      - key: WORKER_PORT
+        value: '3002'
       - key: DATABASE_URL
         fromDatabase:
           name: rupeeroute-postgres
@@ -50,35 +54,3 @@ services:
         generateValue: true
       - key: WEB_CORS_ORIGINS
         value: https://rupee-route-web.vercel.app
-
-  - type: worker
-    name: rupeeroute-worker
-    runtime: docker
-    plan: free
-    region: oregon
-    dockerfilePath: ./infra/docker/Dockerfile.worker
-    dockerContext: .
-    autoDeploy: true
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: LOG_LEVEL
-        value: info
-      - key: LIVE_TRANSFERS_ENABLED
-        value: 'false'
-      - key: DATABASE_URL
-        fromDatabase:
-          name: rupeeroute-postgres
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: rupeeroute-redis
-          property: connectionString
-      - key: WEBHOOK_SIGNING_SECRET
-        fromService:
-          type: web
-          name: rupeeroute-api
-          envVarKey: WEBHOOK_SIGNING_SECRET
-      - key: WORKER_PORT
-        value: '3002'

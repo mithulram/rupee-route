@@ -1,7 +1,16 @@
+import path from 'node:path';
 import swc from 'unplugin-swc';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@rupeeroute/worker/sandbox-worker': path.join(
+        process.cwd(),
+        '../worker/dist/sandbox-worker.js',
+      ),
+    },
+  },
   plugins: [
     swc.vite({
       jsc: {

@@ -3,6 +3,9 @@
   "compilerOptions": {
     "module": "CommonJS",
     "moduleResolution": "Node",
+    "paths": {
+      "@rupeeroute/worker/sandbox-worker": ["../worker/dist/sandbox-worker"]
+    },
     "outDir": "dist",
     "rootDir": "src",
     "emitDecoratorMetadata": true,

@@ -169,11 +169,11 @@ OpenAPI: `packages/api-contracts/openapi.yaml`
 
 ## Sandbox deployment
 
-| Layer                           | Platform                                     | Status                                                        |
-| ------------------------------- | -------------------------------------------- | ------------------------------------------------------------- |
-| Customer web                    | [Vercel](https://vercel.com) (`apps/web`)    | Config ready — see [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) |
-| API + worker + Postgres + Redis | [Render](https://render.com) (`render.yaml`) | Blueprint ready — **requires Render account**                 |
-| Admin console                   | Not deployed                                 | Local only                                                    |
+| Layer                                            | Platform                                     | Status                                                        |
+| ------------------------------------------------ | -------------------------------------------- | ------------------------------------------------------------- |
+| Customer web                                     | [Vercel](https://vercel.com) (`apps/web`)    | Config ready — see [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) |
+| API (embedded sandbox worker) + Postgres + Redis | [Render](https://render.com) (`render.yaml`) | Free plan: worker runs inside API container                   |
+| Admin console                                    | Not deployed                                 | Local only                                                    |
 
 **Deploy order:** Render backend → set `WEB_CORS_ORIGINS` + Vercel `NEXT_PUBLIC_API_URL` (HTTPS only) → Vercel web → `bash scripts/deploy-smoke.sh`.
 
