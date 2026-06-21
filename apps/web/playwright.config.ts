@@ -43,7 +43,7 @@ export default defineConfig({
     ? undefined
     : [
         {
-          command: 'pnpm dev:api',
+          command: process.env.CI ? 'pnpm --filter @rupeeroute/api start' : 'pnpm dev:api',
           cwd: monorepoRoot,
           url: `${apiURL}/health`,
           reuseExistingServer: !process.env.CI,
