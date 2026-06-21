@@ -1,5 +1,15 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "CI",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "LIVE_TRANSFERS_ENABLED",
+    "SANDBOX_FORCE_KYC_APPROVED",
+    "JWT_SECRET",
+    "WEBHOOK_SIGNING_SECRET",
+    "NODE_ENV"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
