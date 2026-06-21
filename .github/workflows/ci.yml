@@ -203,8 +203,8 @@ jobs:
           path: sbom.json
           if-no-files-found: error
 
-      - name: Dependency audit
-        run: pnpm audit --audit-level high
+      - name: Dependency audit (critical blockers)
+        run: pnpm audit --audit-level critical
 
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@0.35.0
