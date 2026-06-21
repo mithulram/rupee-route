@@ -31,6 +31,7 @@ apps/mobile/dist/
 apps/mobile/web-build/
 apps/mobile/ios/build/
 apps/mobile/ios/Pods/
+apps/mobile/ios/Podfile.lock
 apps/mobile/android/build/
 apps/mobile/android/.gradle/
 

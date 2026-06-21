@@ -22,13 +22,24 @@ See [docs/FINAL_VERIFICATION_REPORT.md](./docs/FINAL_VERIFICATION_REPORT.md) for
 
 ## Highlights (portfolio reviewer)
 
-| Area             | What to look at                                                                        |
-| ---------------- | -------------------------------------------------------------------------------------- |
-| Financial domain | Integer minor units, double-entry ledger, FX margin disclosure, transfer state machine |
-| API              | NestJS REST, JWT auth, idempotency, webhook HMAC, admin RBAC                           |
-| Operations       | Admin console with support/compliance/finance roles, reconciliation, DLQ retry         |
-| Quality          | 98 unit tests, strict TypeScript, ESLint, CI with migrations + security scans          |
-| Docs             | Architecture, operations runbook, pilot readiness checklist                            |
+| Area             | What to look at                                                                                |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| Financial domain | Integer minor units, double-entry ledger, FX margin disclosure, transfer state machine         |
+| Customer web     | Full sandbox send flow (amount → quote → recipient → review → funding → tracking)              |
+| Native mobile    | Expo tabs, send flow, EN/DE i18n, biometrics/deep-link hooks — **19 RN unit tests**            |
+| API              | NestJS REST, JWT auth, idempotency, webhook HMAC, admin RBAC, **7 Postgres integration tests** |
+| Operations       | Admin console with support/compliance/finance roles, reconciliation, DLQ retry                 |
+| Quality          | **133 Vitest** tests + Playwright E2E/a11y (Chromium desktop in CI)                            |
+| Docs             | Architecture, operations runbook, pilot readiness checklist                                    |
+
+### Verification status
+
+| Surface                            | Status                                                                                                |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Customer web transfer flow**     | Implemented and E2E-tested (Chromium desktop smoke in CI; full multi-browser locally)                 |
+| **Native mobile app**              | Implemented; lint, typecheck, build, and **offline + unit verification** complete                     |
+| **iOS/Android Maestro device E2E** | Flows defined; **pending stable hardware** (beta Xcode / simulator mismatch on some machines)         |
+| **Sandbox / live money**           | **Sandbox only** — `LIVE_TRANSFERS_ENABLED=false`; no real money movement or regulatory authorization |
 
 ## Prerequisites
 
@@ -79,10 +90,16 @@ pnpm dev
 ```bash
 pnpm lint          # ESLint strict (17 packages)
 pnpm typecheck     # TypeScript strict
-pnpm test          # Vitest — 98 tests
+pnpm test          # Vitest — 133 tests (incl. 7 API Postgres integration tests in CI)
 pnpm build         # Production builds
 pnpm format:check  # Prettier
 bash scripts/check-secrets.sh .  # Secret pattern scan
+
+# Mobile without simulator:
+bash scripts/test-mobile-offline.sh
+
+# Web E2E smoke (Chromium desktop):
+pnpm --filter @rupeeroute/web test:e2e:smoke
 ```
 
 ## Monorepo layout
@@ -93,7 +110,7 @@ apps/
   worker/       BullMQ — transfer orchestration, DLQ
   web/          Next.js consumer app
   admin/        Next.js ops console (RBAC)
-  mobile/       Expo React Native scaffold
+  mobile/       Expo React Native — tabs, send flow, i18n
 packages/
   domain/       Money, quotes, ledger, state machine, Prisma
   provider-sdk/ Deterministic sandbox providers + webhook sim
