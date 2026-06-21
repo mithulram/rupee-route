@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "sh -c 'set -a && . ./.env && set +a && exec tsx watch src/main.ts'",
-    "start": "sh -c 'set -a && . ./.env && set +a && exec node dist/main.js'",
+    "dev": "sh -c 'set -a; [ -f ./.env ] && . ./.env; set +a && exec tsx watch src/main.ts'",
+    "start": "sh -c 'set -a; [ -f ./.env ] && . ./.env; set +a && exec node dist/main.js'",
     "lint": "eslint src --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests"

@@ -1,0 +1,14 @@
+title = "RupeeRoute gitleaks config"
+
+[allowlist]
+description = "Sandbox test fixtures and integration tests — no real credentials"
+paths = [
+  '''apps/api/src/integration/''',
+  '''apps/api/src/.*\.test\.ts''',
+  '''scripts/check-secrets\.sh''',
+  '''\.env\.example$''',
+  '''apps/.*/\.env\.example$''',
+  '''packages/.*/\.env\.example$''',
+  '''README\.md''',
+  '''docs/''',
+]

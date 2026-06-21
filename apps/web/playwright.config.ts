@@ -19,6 +19,12 @@ const firefoxLaunchOptions = {
   },
 };
 
+const sandboxWebServerEnv = {
+  ...process.env,
+  SANDBOX_FORCE_KYC_APPROVED: 'true',
+  LIVE_TRANSFERS_ENABLED: 'false',
+};
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
@@ -42,16 +48,14 @@ export default defineConfig({
           url: `${apiURL}/health`,
           reuseExistingServer: !process.env.CI,
           timeout: 180_000,
-          env: {
-            SANDBOX_FORCE_KYC_APPROVED: 'true',
-            LIVE_TRANSFERS_ENABLED: 'false',
-          },
+          env: sandboxWebServerEnv,
         },
         {
           command: 'pnpm start',
           url: baseURL,
           reuseExistingServer: !process.env.CI,
           timeout: 120_000,
+          env: sandboxWebServerEnv,
         },
       ],
   projects: [

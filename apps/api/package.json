@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "nest build",
-    "dev": "sh -c 'set -a && . ./.env && set +a && exec nest start --watch'",
-    "start": "sh -c 'set -a && . ./.env && set +a && exec node dist/main.js'",
+    "dev": "sh -c 'set -a; [ -f ./.env ] && . ./.env; set +a && exec nest start --watch'",
+    "start": "sh -c 'set -a; [ -f ./.env ] && . ./.env; set +a && exec node dist/main.js'",
     "lint": "eslint \"src/**/*.ts\" --max-warnings 0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
